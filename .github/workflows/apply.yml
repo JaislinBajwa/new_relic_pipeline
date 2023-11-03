@@ -1,0 +1,42 @@
+name: d-deployment
+
+on:
+  workflow_dispatch:
+     inputs : 
+      region :
+        description: "apply"
+        required: true  
+        type: string    
+
+env:
+  BUCKET: practice-j
+  TFSTATE_FILE: terraform.tfstate
+  aws_region: ${{ github.event.inputs.region }}
+
+jobs:
+  s3bucket :
+      runs-on : ubuntu-latest
+      steps:
+        - uses: actions/checkout@v3
+        - name: Terraform hashicorp setup
+          uses: hashicorp/setup-terraform@v2
+
+        - name: Configure AWS Credentials
+          uses: aws-actions/configure-aws-credentials@v1
+          with:
+            aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+            aws-region: ${{ env.aws_region }}
+
+        - name: terraform init
+          run: terraform init
+          working-directory: "parent"
+
+        - name: terraform plan
+          run: terraform plan
+          working-directory: "parent"
+
+        - name: terraform apply
+          run: terraform apply -auto-approve
+          working-directory: "parent"
